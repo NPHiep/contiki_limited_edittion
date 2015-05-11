@@ -265,6 +265,8 @@ extern rpl_stats_t rpl_stats;
 /* Instances */
 extern rpl_instance_t instance_table[];
 extern rpl_instance_t *default_instance;
+/*Changed*/
+extern rpl_instance_t *second_instance;
 
 /* ICMPv6 functions for RPL. */
 void dis_output(uip_ipaddr_t *addr);
@@ -288,6 +290,7 @@ void rpl_free_instance(rpl_instance_t *);
 
 /* DAG parent management function. */
 rpl_parent_t *rpl_add_parent(rpl_dag_t *, rpl_dio_t *dio, uip_ipaddr_t *);
+/* Changed to find parent for only a particular instance */
 rpl_parent_t *rpl_find_parent(rpl_dag_t *, uip_ipaddr_t *);
 rpl_parent_t *rpl_find_parent_any_dag(rpl_instance_t *instance, uip_ipaddr_t *addr);
 void rpl_nullify_parent(rpl_parent_t *);
@@ -295,12 +298,14 @@ void rpl_remove_parent(rpl_parent_t *);
 void rpl_move_parent(rpl_dag_t *dag_src, rpl_dag_t *dag_dst, rpl_parent_t *parent);
 rpl_parent_t *rpl_select_parent(rpl_dag_t *dag);
 rpl_dag_t *rpl_select_dag(rpl_instance_t *instance,rpl_parent_t *parent);
+/*Changed*/
 void rpl_recalculate_ranks(void);
 
 /* RPL routing table functions. */
 void rpl_remove_routes(rpl_dag_t *dag);
 void rpl_remove_routes_by_nexthop(uip_ipaddr_t *nexthop, rpl_dag_t *dag);
-uip_ds6_route_t *rpl_add_route(rpl_dag_t *dag, uip_ipaddr_t *prefix,
+/*Changed*/
+uip_ds6_route_t *rpl_add_route(uint8_t instance_id, rpl_dag_t *dag, uip_ipaddr_t *prefix,
                                int prefix_len, uip_ipaddr_t *next_hop);
 void rpl_purge_routes(void);
 

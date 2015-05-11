@@ -672,6 +672,7 @@ uip_add_rcv_nxt(uint16_t n)
 void
 uip_process(uint8_t flag)
 {
+  
   register struct uip_conn *uip_connr = uip_conn;
 
 #if UIP_UDP
@@ -1136,7 +1137,6 @@ uip_process(uint8_t flag)
     }
   }
   UIP_LOG("udp: no matching connection found");
-  UIP_STAT(++uip_stat.udp.drop);
 #if UIP_CONF_ICMP_DEST_UNREACH && !UIP_CONF_IPV6
   /* Copy fields from packet header into payload of this ICMP packet. */
   memcpy(&(ICMPBUF->payload[0]), ICMPBUF, UIP_IPH_LEN + 8);
@@ -1170,7 +1170,6 @@ uip_process(uint8_t flag)
 #endif /* UIP_CONF_ICMP_DEST_UNREACH */
   
  udp_found:
-  UIP_STAT(++uip_stat.udp.recv);
   uip_conn = NULL;
   uip_flags = UIP_NEWDATA;
   uip_sappdata = uip_appdata = &uip_buf[UIP_LLH_LEN + UIP_IPUDPH_LEN];
@@ -1215,7 +1214,6 @@ uip_process(uint8_t flag)
   }
 #endif /* UIP_UDP_CHECKSUMS */
   
-  UIP_STAT(++uip_stat.udp.sent);
   goto ip_send_nolen;
 #endif /* UIP_UDP */
   
@@ -1282,6 +1280,7 @@ uip_process(uint8_t flag)
   BUF->flags = TCP_RST | TCP_ACK;
   uip_len = UIP_IPTCPH_LEN;
   BUF->tcpoffset = 5 << 4;
+  BUF->tcpoffset &= 0xf0;
 
   /* Flip the seqno and ackno fields in the TCP header. */
   c = BUF->seqno[3];

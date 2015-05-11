@@ -110,6 +110,8 @@ struct rpl_dag;
 struct rpl_parent {
   struct rpl_parent *next;
   struct rpl_dag *dag;
+  uint8_t instance_id;  //changed
+ 
 #if RPL_DAG_MC != RPL_DAG_MC_NONE
   rpl_metric_container_t mc;
 #endif /* RPL_DAG_MC != RPL_DAG_MC_NONE */
@@ -238,7 +240,8 @@ int rpl_set_default_route(rpl_instance_t *instance, uip_ipaddr_t *from);
 rpl_dag_t *rpl_get_any_dag(void);
 rpl_instance_t *rpl_get_instance(uint8_t instance_id);
 void rpl_update_header_empty(void);
-int rpl_update_header_final(uip_ipaddr_t *addr);
+/*Changed*/
+int rpl_update_header_final(uint8_t instance_id, uip_ipaddr_t *addr);
 int rpl_verify_header(int);
 void rpl_insert_header(void);
 void rpl_remove_header(void);

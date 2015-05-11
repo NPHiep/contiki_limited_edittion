@@ -64,6 +64,7 @@ rpl_purge_routes(void)
   uip_ds6_route_t *r;
   uip_ipaddr_t prefix;
   rpl_dag_t *dag;
+  rpl_instance_t *instance; //changed
 
   /* First pass, decrement lifetime */
   r = uip_ds6_route_head();
@@ -84,6 +85,7 @@ rpl_purge_routes(void)
   r = uip_ds6_route_head();
 
   while(r != NULL) {
+    /*Pre-change handle second_instance*/
     if(r->state.lifetime < 1) {
       /* Routes with lifetime == 1 have only just been decremented from 2 to 1,
        * thus we want to keep them. Hence < and not <= */
@@ -92,9 +94,12 @@ rpl_purge_routes(void)
       r = uip_ds6_route_head();
       PRINTF("No more routes to ");
       PRINT6ADDR(&prefix);
-      dag = default_instance->current_dag;
+      /*Changed*/
+      instance = rpl_get_instance(r->state.instance_id);
+      dag = instance->current_dag;
+      //dag1 = second_instance->current_dag;
       /* Propagate this information with a No-Path DAO to preferred parent if we are not a RPL Root */
-      if(dag->rank != ROOT_RANK(default_instance)) {
+      if(dag->rank != ROOT_RANK(instance)) {
         PRINTF(" -> generate No-Path DAO\n");
         dao_output_target(dag->preferred_parent, &prefix, RPL_ZERO_LIFETIME);
         /* Don't schedule more than 1 No-Path DAO, let next iteration handle that */
@@ -142,19 +147,20 @@ rpl_remove_routes_by_nexthop(uip_ipaddr_t *nexthop, rpl_dag_t *dag)
   }
   ANNOTATE("#L %u 0\n", nexthop->u8[sizeof(uip_ipaddr_t) - 1]);
 }
-/*---------------------------------------------------------------------------*/
+/*Changed--------------------------------------------------------------------*/
 uip_ds6_route_t *
-rpl_add_route(rpl_dag_t *dag, uip_ipaddr_t *prefix, int prefix_len,
+rpl_add_route(uint8_t instance_id, rpl_dag_t *dag, uip_ipaddr_t *prefix, int prefix_len,
               uip_ipaddr_t *next_hop)
 {
   uip_ds6_route_t *rep;
 
-  if((rep = uip_ds6_route_add(prefix, prefix_len, next_hop)) == NULL) {
+  if((rep = uip_ds6_route_add(instance_id, prefix, prefix_len, next_hop)) == NULL) {
     PRINTF("RPL: No space for more route entries\n");
     return NULL;
   }
 
   rep->state.dag = dag;
+  rep->state.instance_id = instance_id;  //changed
   rep->state.lifetime = RPL_LIFETIME(dag->instance, dag->instance->default_lifetime);
   rep->state.learned_from = RPL_ROUTE_FROM_INTERNAL;
 
@@ -222,6 +228,8 @@ rpl_init(void)
   uip_ipaddr_t rplmaddr;
   PRINTF("RPL started\n");
   default_instance = NULL;
+  /*Changed*/
+  second_instance = NULL;
 
   rpl_dag_init();
   rpl_reset_periodic_timer();

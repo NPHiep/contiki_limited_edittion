@@ -41,6 +41,8 @@
 #include "contiki-net.h"
 #include "net/uip-split.h"
 #include "net/uip-packetqueue.h"
+/*Changed*/
+#include "net/rpl/rpl-private.h"
 
 #if UIP_CONF_IPV6
 #include "net/uip-nd6.h"
@@ -51,6 +53,9 @@
 
 #define DEBUG DEBUG_NONE
 #include "net/uip-debug.h"
+
+/*Changed*/
+#define UIP_CONF_REG_PKT_LEN 96
 
 #if UIP_LOGGING
 #include <stdio.h>
@@ -534,7 +539,7 @@ tcpip_input(void)
   uip_ext_len = 0;
 #endif /*UIP_CONF_IPV6*/
 }
-/*---------------------------------------------------------------------------*/
+/*Changed-------------------------------------------------------------------*/
 #if UIP_CONF_IPV6
 void
 tcpip_ipv6_output(void)
@@ -545,7 +550,6 @@ tcpip_ipv6_output(void)
   if(uip_len == 0) {
     return;
   }
-
   if(uip_len > UIP_LINK_MTU) {
     UIP_LOG("tcpip_ipv6_output: Packet to big");
     uip_len = 0;
@@ -558,6 +562,25 @@ tcpip_ipv6_output(void)
     return;
   }
 
+  /*todo: Changed*/
+  uint8_t instance_id = RPL_DEFAULT_INSTANCE;
+  
+  uint8_t pkg_type = (UIP_TCP_BUF->tcpoffset)& 0xf;
+  if(pkg_type == PKG_CRITICAL){
+     instance_id = RPL_SECOND_INSTANCE; 
+     printf ("critial uip_len: %d\n", uip_len );
+  }
+ 
+  /*
+  
+  if((uip_len == UIP_CONF_REG_PKT_LEN || uip_len == UIP_CONF_REG_PKT_LEN + 8) && 
+      rpl_get_instance(RPL_SECOND_INSTANCE) != NULL) {
+    printf("WTF <<<<<<<<<<<<<<<<<<");
+    instance_id = RPL_SECOND_INSTANCE; 
+  }
+  if((uip_len == UIP_CONF_REG_PKT_LEN || uip_len == UIP_CONF_REG_PKT_LEN + 8))
+    printf ("uip_len: %x %d %d\n",  UIP_TCP_BUF->tcpoffset, uip_len, instance_id);
+*/
   if(!uip_is_addr_mcast(&UIP_IP_BUF->destipaddr)) {
     /* Next hop determination */
     nbr = NULL;
@@ -570,12 +593,16 @@ tcpip_ipv6_output(void)
     } else {
       uip_ds6_route_t *route;
       /* Check if we have a route to the destination address. */
-      route = uip_ds6_route_lookup(&UIP_IP_BUF->destipaddr);
+      //route = uip_ds6_route_lookup(0x1e, &UIP_IP_BUF->destipaddr);
+      /*Changed*/
+      //printf("instance_id: %d\n", instance_id);
+      route = uip_ds6_route_lookup(instance_id, &UIP_IP_BUF->destipaddr);
 
       /* No route was found - we send to the default route instead. */
       if(route == NULL) {
         PRINTF("tcpip_ipv6_output: no route found, using default route\n");
-        nexthop = uip_ds6_defrt_choose();
+        /*Changed*/
+        nexthop = uip_ds6_defrt_choose(instance_id);
         if(nexthop == NULL) {
 #ifdef UIP_FALLBACK_INTERFACE
 	  PRINTF("FALLBACK: removing ext hdrs & setting proto %d %d\n", 
@@ -642,7 +669,8 @@ tcpip_ipv6_output(void)
     /* End of next hop determination */
 
 #if UIP_CONF_IPV6_RPL
-    if(rpl_update_header_final(nexthop)) {
+    /*Changed*/
+    if(rpl_update_header_final(instance_id, nexthop)) {
       uip_len = 0;
       return;
     }

@@ -88,6 +88,7 @@ void uip_ds6_notification_rm(struct uip_ds6_notification *n);
 typedef struct rpl_route_entry {
   uint32_t lifetime;
   void *dag;
+  uint8_t instance_id; //changed
   uint8_t learned_from;
   uint8_t nopath_received;
 } rpl_route_entry_t;
@@ -115,23 +116,24 @@ typedef struct uip_ds6_route {
   uint8_t length;
 } uip_ds6_route_t;
 
-
-
 /** \brief An entry in the default router list */
 typedef struct uip_ds6_defrt {
   struct uip_ds6_defrt *next;
   uip_ipaddr_t ipaddr;
+  /*Changed*/
+  uint8_t instance_id;
   struct stimer lifetime;
   uint8_t isinfinite;
 } uip_ds6_defrt_t;
 
 /** \name Default router list basic routines */
 /** @{ */
-uip_ds6_defrt_t *uip_ds6_defrt_add(uip_ipaddr_t *ipaddr,
+/*Changed*/
+uip_ds6_defrt_t *uip_ds6_defrt_add(uint8_t instance_id, uip_ipaddr_t *ipaddr,
                                    unsigned long interval);
 void uip_ds6_defrt_rm(uip_ds6_defrt_t *defrt);
 uip_ds6_defrt_t *uip_ds6_defrt_lookup(uip_ipaddr_t *ipaddr);
-uip_ipaddr_t *uip_ds6_defrt_choose(void);
+uip_ipaddr_t *uip_ds6_defrt_choose(uint8_t instance_id);
 
 void uip_ds6_defrt_periodic(void);
 /** @} */
@@ -139,8 +141,9 @@ void uip_ds6_defrt_periodic(void);
 
 /** \name Routing Table basic routines */
 /** @{ */
-uip_ds6_route_t *uip_ds6_route_lookup(uip_ipaddr_t *destipaddr);
-uip_ds6_route_t *uip_ds6_route_add(uip_ipaddr_t *ipaddr, uint8_t length,
+/*Changed*/
+uip_ds6_route_t *uip_ds6_route_lookup(uint8_t instance_id, uip_ipaddr_t *destipaddr);
+uip_ds6_route_t *uip_ds6_route_add(uint8_t instance_id, uip_ipaddr_t *ipaddr, uint8_t length,
                                    uip_ipaddr_t *next_hop);
 void uip_ds6_route_rm(uip_ds6_route_t *route);
 void uip_ds6_route_rm_by_nexthop(uip_ipaddr_t *nexthop);

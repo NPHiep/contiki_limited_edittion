@@ -63,11 +63,19 @@
  * RPL_CONF_OF parameter. This should be defined to be the name of an 
  * rpl_of object linked into the system image, e.g., rpl_of0.
  */
-#ifdef RPL_CONF_OF
-#define RPL_OF RPL_CONF_OF
+#ifdef RPL_CONF_OF1
+#define RPL_OF1 RPL_CONF_OF1
 #else
 /* ETX is the default objective function. */
-#define RPL_OF rpl_mrhof
+#define RPL_OF1 rpl_mrhof
+#endif /* RPL_CONF_OF */
+
+/*Changed Add second OF */
+#ifdef RPL_CONF_OF2
+#define RPL_OF2 RPL_CONF_OF2
+#else
+/* OF0 is the second objective function. */
+#define RPL_OF2 rpl_of0
 #endif /* RPL_CONF_OF */
 
 /* This value decides which DAG instance we should participate in by default. */
@@ -76,6 +84,14 @@
 #else
 #define RPL_DEFAULT_INSTANCE	       0x1e
 #endif /* RPL_CONF_DEFAULT_INSTANCE */
+
+/*Changed*/
+/* Add second instance */
+#ifdef RPL_CONF_SECOND_INSTANCE
+#define RPL_SECOND_INSTANCE RPL_CONF_SECOND_INSTANCE
+#else
+#define RPL_SECOND_INSTANCE	       0x1f
+#endif /* RPL_CONF_SECOND_INSTANCE */
 
 /*
  * This value decides if this node must stay as a leaf or not
@@ -90,19 +106,21 @@
 /*
  * Maximum of concurent RPL instances.
  */
-#ifdef RPL_CONF_MAX_INSTANCES
-#define RPL_MAX_INSTANCES     RPL_CONF_MAX_INSTANCES
-#else
-#define RPL_MAX_INSTANCES     1
-#endif /* RPL_CONF_MAX_INSTANCES */
+/*Changed*/
+// #ifdef RPL_CONF_MAX_INSTANCES
+// #define RPL_MAX_INSTANCES     RPL_CONF_MAX_INSTANCES
+// #else
+#define RPL_MAX_INSTANCES     2 // 1 
+// #endif /* RPL_CONF_MAX_INSTANCES */
 
 /*
  * Maximum number of DAGs within an instance.
  */
+/*Changed*/
 #ifdef RPL_CONF_MAX_DAG_PER_INSTANCE
 #define RPL_MAX_DAG_PER_INSTANCE     RPL_CONF_MAX_DAG_PER_INSTANCE
 #else
-#define RPL_MAX_DAG_PER_INSTANCE     2
+#define RPL_MAX_DAG_PER_INSTANCE     1 // 2
 #endif /* RPL_CONF_MAX_DAG_PER_INSTANCE */
 
 /*
@@ -185,5 +203,14 @@
 #else
 #define RPL_DEFAULT_LIFETIME            RPL_CONF_DEFAULT_LIFETIME
 #endif
+
+
+/*
+ *Todo: changed
+ *Define package type 
+ */
+
+#define PKG_NORMAL 0x01
+#define PKG_CRITICAL 0x02
 
 #endif /* RPL_CONF_H */

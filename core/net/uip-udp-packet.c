@@ -42,23 +42,36 @@
 extern uint16_t uip_slen;
 
 #include "net/uip-udp-packet.h"
+#include "net/rpl/rpl-conf.h"
 
 #include <string.h>
-
+//todo: changed
+#define UIP_TCP_BUF ((struct uip_tcpip_hdr *)&uip_buf[UIP_LLH_LEN])
 /*---------------------------------------------------------------------------*/
 void
 uip_udp_packet_send(struct uip_udp_conn *c, const void *data, int len)
 {
+ uint8_t instance_id = *(uint8_t *)data;
 #if UIP_UDP
-  if(data != NULL) {
+  if(data != NULL) {    
     uip_udp_conn = c;
     uip_slen = len;
     memcpy(&uip_buf[UIP_LLH_LEN + UIP_IPUDPH_LEN], data,
            len > UIP_BUFSIZE - UIP_LLH_LEN - UIP_IPUDPH_LEN?
            UIP_BUFSIZE - UIP_LLH_LEN - UIP_IPUDPH_LEN: len);
+
     uip_process(UIP_UDP_SEND_CONN);
+    
+  //todo: changed reversed field
+UIP_TCP_BUF->tcpoffset |= 0xf0;
+if(instance_id == RPL_DEFAULT_INSTANCE){
+  UIP_TCP_BUF->tcpoffset |= PKG_NORMAL; 
+}else{
+  UIP_TCP_BUF->tcpoffset |= PKG_CRITICAL; 
+}
+
 #if UIP_CONF_IPV6
-    tcpip_ipv6_output();
+    tcpip_ipv6_output(); 
 #else
     if(uip_len > 0) {
       tcpip_output();
@@ -84,6 +97,7 @@ uip_udp_packet_sendto(struct uip_udp_conn *c, const void *data, int len,
     /* Load new IP addr/port */
     uip_ipaddr_copy(&c->ripaddr, toaddr);
     c->rport = toport;
+
 
     uip_udp_packet_send(c, data, len);
 

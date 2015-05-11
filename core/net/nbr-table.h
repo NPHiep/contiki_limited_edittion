@@ -39,6 +39,7 @@
 #include "net/rime/rimeaddr.h"
 #include "net/netstack.h"
 
+/*Changed NBR_TABLE_MAX_NEIGHBORS 16*/
 /* Neighbor table size */
 #ifdef NBR_TABLE_CONF_MAX_NEIGHBORS
 #define NBR_TABLE_MAX_NEIGHBORS NBR_TABLE_CONF_MAX_NEIGHBORS

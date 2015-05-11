@@ -84,7 +84,16 @@ void RPL_DEBUG_DAO_OUTPUT(rpl_parent_t *);
 
 static uint8_t dao_sequence = RPL_LOLLIPOP_INIT;
 
-extern rpl_of_t RPL_OF;
+/* some debug callbacks useful when debugging RPL networks */
+#ifdef RPL_DEBUG_DIO_INPUT
+void RPL_DEBUG_DIO_INPUT(uip_ipaddr_t *, rpl_dio_t *);
+#endif
+
+#ifdef RPL_DEBUG_DAO_OUTPUT
+void RPL_DEBUG_DAO_OUTPUT(rpl_parent_t *);
+#endif
+
+extern rpl_of_t RPL_OF1;
 
 /*---------------------------------------------------------------------------*/
 static int
@@ -190,6 +199,8 @@ dis_output(uip_ipaddr_t *addr)
   PRINTF("\n");
 
   uip_icmp6_send(addr, ICMP6_RPL, RPL_CODE_DIS, 2);
+  /*Show status message*/
+  printf("DIS sent\n");
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -212,7 +223,7 @@ dio_input(void)
   dio.dag_redund = RPL_DIO_REDUNDANCY;
   dio.dag_min_hoprankinc = RPL_MIN_HOPRANKINC;
   dio.dag_max_rankinc = RPL_MAX_RANKINC;
-  dio.ocp = RPL_OF.ocp;
+  dio.ocp = RPL_OF1.ocp;
   dio.default_lifetime = RPL_DEFAULT_LIFETIME;
   dio.lifetime_unit = RPL_DEFAULT_LIFETIME_UNIT;
 
@@ -253,6 +264,7 @@ dio_input(void)
   buffer = UIP_ICMP_PAYLOAD;
 
   dio.instance_id = buffer[i++];
+
   dio.version = buffer[i++];
   dio.rank = get16(buffer, i);
   i += 2;
@@ -551,6 +563,8 @@ dio_output(rpl_instance_t *instance, uip_ipaddr_t *uc_addr)
     uip_icmp6_send(uc_addr, ICMP6_RPL, RPL_CODE_DIO, pos);
   }
 #endif /* RPL_LEAF_ONLY */
+  /*Show status message*/
+  printf("DIO sent\n");
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -652,7 +666,8 @@ dao_input(void)
   PRINT6ADDR(&prefix);
   PRINTF("\n");
 
-  rep = uip_ds6_route_lookup(&prefix);
+  /*Changed*/
+  rep = uip_ds6_route_lookup(instance->instance_id, &prefix);
 
   if(lifetime == RPL_ZERO_LIFETIME) {
     PRINTF("RPL: No-Path DAO received\n");
@@ -700,7 +715,8 @@ dao_input(void)
   }
 
   PRINTF("RPL: adding DAO route\n");
-  rep = rpl_add_route(dag, &prefix, prefixlen, &dao_sender_addr);
+  /*Changed*/
+  rep = rpl_add_route(instance_id, dag, &prefix, prefixlen, &dao_sender_addr);
   if(rep == NULL) {
     RPL_STAT(rpl_stats.mem_overflows++);
     PRINTF("RPL: Could not add a route after receiving a DAO\n");
@@ -718,6 +734,8 @@ dao_input(void)
       PRINTF("\n");
       uip_icmp6_send(rpl_get_parent_ipaddr(dag->preferred_parent),
                      ICMP6_RPL, RPL_CODE_DAO, buffer_length);
+      /*Show status message*/
+      printf("DAO sent\n");
     }
     if(flags & RPL_DAO_K_FLAG) {
       dao_ack_output(instance, &dao_sender_addr, sequence);
@@ -822,6 +840,8 @@ dao_output_target(rpl_parent_t *parent, uip_ipaddr_t *prefix, uint8_t lifetime)
 
   if(rpl_get_parent_ipaddr(parent) != NULL) {
     uip_icmp6_send(rpl_get_parent_ipaddr(parent), ICMP6_RPL, RPL_CODE_DAO, pos);
+    /*Show status message*/
+    printf("DAO sent\n");
   }
 }
 /*---------------------------------------------------------------------------*/
@@ -866,6 +886,8 @@ dao_ack_output(rpl_instance_t *instance, uip_ipaddr_t *dest, uint8_t sequence)
   buffer[3] = 0;
 
   uip_icmp6_send(dest, ICMP6_RPL, RPL_CODE_DAO_ACK, 4);
+  /*Show status message*/
+  printf("DAO sent\n");
 }
 /*---------------------------------------------------------------------------*/
 void

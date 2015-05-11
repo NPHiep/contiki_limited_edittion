@@ -212,9 +212,9 @@ uip_ds6_route_num_routes(void)
 {
   return num_routes;
 }
-/*---------------------------------------------------------------------------*/
+/*Changed--------------------------------------------------------------------*/
 uip_ds6_route_t *
-uip_ds6_route_lookup(uip_ipaddr_t *addr)
+uip_ds6_route_lookup(uint8_t instance_id, uip_ipaddr_t *addr)
 {
   uip_ds6_route_t *r;
   uip_ds6_route_t *found_route;
@@ -231,7 +231,9 @@ uip_ds6_route_lookup(uip_ipaddr_t *addr)
       r != NULL;
       r = uip_ds6_route_next(r)) {
     if(r->length >= longestmatch &&
-       uip_ipaddr_prefixcmp(addr, &r->ipaddr, r->length)) {
+       uip_ipaddr_prefixcmp(addr, &r->ipaddr, r->length) &&
+       //changed
+       r->state.instance_id == instance_id) {
       longestmatch = r->length;
       found_route = r;
     }
@@ -249,9 +251,9 @@ uip_ds6_route_lookup(uip_ipaddr_t *addr)
 
   return found_route;
 }
-/*---------------------------------------------------------------------------*/
+/*Changed-------------------------------------------------------------------*/
 uip_ds6_route_t *
-uip_ds6_route_add(uip_ipaddr_t *ipaddr, uint8_t length,
+uip_ds6_route_add(uint8_t instance_id, uip_ipaddr_t *ipaddr, uint8_t length,
 		  uip_ipaddr_t *nexthop)
 {
   uip_ds6_route_t *r;
@@ -272,7 +274,8 @@ uip_ds6_route_add(uip_ipaddr_t *ipaddr, uint8_t length,
   /* First make sure that we don't add a route twice. If we find an
      existing route for our destination, we'll just update the old
      one. */
-  r = uip_ds6_route_lookup(ipaddr);
+  /*Changed*/
+  r = uip_ds6_route_lookup(instance_id, ipaddr);
   if(r != NULL) {
     PRINTF("uip_ds6_route_add: old route already found, updating this one instead: ");
     PRINT6ADDR(ipaddr);
@@ -448,9 +451,30 @@ uip_ds6_route_rm_by_nexthop(uip_ipaddr_t *nexthop)
                                      (rimeaddr_t *)nexthop_lladdr);
   rm_routelist(routes);
 }
-/*---------------------------------------------------------------------------*/
+/*Changed--------------------------------------------------------------------*/
+/*static clock_time_t
+get_time(void)
+{
+  return (clock_time_t)((clock_time()*1000UL)/CLOCK_CONF_SECOND);
+}*/
+/*Changed--------------------------------------------------------------------*/
 uip_ds6_defrt_t *
-uip_ds6_defrt_add(uip_ipaddr_t *ipaddr, unsigned long interval)
+uip_ds6_defrt_lookup_by_instance(uint8_t instance_id, uip_ipaddr_t *ipaddr)
+{
+  uip_ds6_defrt_t *d;
+  for(d = list_head(defaultrouterlist);
+      d != NULL;
+      d = list_item_next(d)) {
+    if(uip_ipaddr_cmp(&d->ipaddr, ipaddr) && 
+       d->instance_id == instance_id) { 
+      return d;
+    }
+  }
+  return NULL;
+}
+/*Changed--------------------------------------------------------------------*/
+uip_ds6_defrt_t *
+uip_ds6_defrt_add(uint8_t instance_id, uip_ipaddr_t *ipaddr, unsigned long interval)
 {
   uip_ds6_defrt_t *d;
 
@@ -459,7 +483,7 @@ uip_ds6_defrt_add(uip_ipaddr_t *ipaddr, unsigned long interval)
 #endif /* DEBUG != DEBUG_NONE */
 
   PRINTF("uip_ds6_defrt_add\n");
-  d = uip_ds6_defrt_lookup(ipaddr);
+  d = uip_ds6_defrt_lookup_by_instance(instance_id, ipaddr); //changed
   if(d == NULL) {
     d = memb_alloc(&defaultroutermemb);
     if(d == NULL) {
@@ -472,6 +496,7 @@ uip_ds6_defrt_add(uip_ipaddr_t *ipaddr, unsigned long interval)
       PRINT6ADDR(ipaddr);
       PRINTF("\n");
     }
+    d->instance_id = instance_id; //changed
 
     list_push(defaultrouterlist, d);
   }
@@ -535,15 +560,15 @@ uip_ds6_defrt_lookup(uip_ipaddr_t *ipaddr)
   for(d = list_head(defaultrouterlist);
       d != NULL;
       d = list_item_next(d)) {
-    if(uip_ipaddr_cmp(&d->ipaddr, ipaddr)) {
+    if(uip_ipaddr_cmp(&d->ipaddr, ipaddr)) { 
       return d;
     }
   }
   return NULL;
 }
-/*---------------------------------------------------------------------------*/
+/*Changed--------------------------------------------------------------------*/
 uip_ipaddr_t *
-uip_ds6_defrt_choose(void)
+uip_ds6_defrt_choose(uint8_t instance_id)
 {
   uip_ds6_defrt_t *d;
   uip_ds6_nbr_t *bestnbr;
@@ -553,20 +578,22 @@ uip_ds6_defrt_choose(void)
   for(d = list_head(defaultrouterlist);
       d != NULL;
       d = list_item_next(d)) {
-    PRINTF("Defrt, IP address ");
-    PRINT6ADDR(&d->ipaddr);
-    PRINTF("\n");
-    bestnbr = uip_ds6_nbr_lookup(&d->ipaddr);
-    if(bestnbr != NULL && bestnbr->state != NBR_INCOMPLETE) {
-      PRINTF("Defrt found, IP address ");
+    if(d->instance_id == instance_id) {
+      PRINTF("Defrt, IP address ");
       PRINT6ADDR(&d->ipaddr);
       PRINTF("\n");
-      return &d->ipaddr;
-    } else {
-      addr = &d->ipaddr;
-      PRINTF("Defrt INCOMPLETE found, IP address ");
-      PRINT6ADDR(&d->ipaddr);
-      PRINTF("\n");
+      bestnbr = uip_ds6_nbr_lookup(&d->ipaddr);
+      if(bestnbr != NULL && bestnbr->state != NBR_INCOMPLETE) {
+        PRINTF("Defrt found, IP address ");
+        PRINT6ADDR(&d->ipaddr);
+        PRINTF("\n");
+        return &d->ipaddr;
+      } else {
+        addr = &d->ipaddr;
+        PRINTF("Defrt INCOMPLETE found, IP address ");
+        PRINT6ADDR(&d->ipaddr);
+        PRINTF("\n");
+      }
     }
   }
   return addr;

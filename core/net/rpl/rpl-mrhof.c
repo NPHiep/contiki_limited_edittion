@@ -160,6 +160,9 @@ calculate_rank(rpl_parent_t *p, rpl_rank_t base_rank)
     new_rank = base_rank + rank_increase;
   }
 
+  //printf ("rpl-mrhof.c: base-rank: %d, rank_increase: %d\n", base_rank, rank_increase);
+  //printf ("rpl-mrhof.c: new_rank: %d\n", new_rank);
+
   return new_rank;
 }
 

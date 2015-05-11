@@ -88,7 +88,8 @@ rpl_verify_header(int uip_ext_opt_offset)
        routes that go through the neighbor that sent the packet to
        us. */
     uip_ds6_route_t *route;
-    route = uip_ds6_route_lookup(&UIP_IP_BUF->destipaddr);
+    /*Changed*/
+    route = uip_ds6_route_lookup(instance->instance_id, &UIP_IP_BUF->destipaddr);
     if(route != NULL) {
       uip_ds6_route_rm(route);
 
@@ -216,7 +217,8 @@ rpl_update_header_empty(void)
        general not go back up again. If this happens, a
        RPL_HDR_OPT_FWD_ERR should be flagged. */
     if((UIP_EXT_HDR_OPT_RPL_BUF->flags & RPL_HDR_OPT_DOWN)) {
-      if(uip_ds6_route_lookup(&UIP_IP_BUF->destipaddr) == NULL) {
+      /*Changed*/
+      if(uip_ds6_route_lookup(instance->instance_id, &UIP_IP_BUF->destipaddr) == NULL) {
         UIP_EXT_HDR_OPT_RPL_BUF->flags |= RPL_HDR_OPT_FWD_ERR;
         PRINTF("RPL forwarding error\n");
       }
@@ -224,7 +226,7 @@ rpl_update_header_empty(void)
       /* Set the down extension flag correctly as described in Section
          11.2 of RFC6550. If the packet progresses along a DAO route,
          the down flag should be set. */
-      if(uip_ds6_route_lookup(&UIP_IP_BUF->destipaddr) == NULL) {
+      if(uip_ds6_route_lookup(instance->instance_id, &UIP_IP_BUF->destipaddr) == NULL) {
         /* No route was found, so this packet will go towards the RPL
            root. If so, we should not set the down flag. */
         UIP_EXT_HDR_OPT_RPL_BUF->flags &= ~RPL_HDR_OPT_DOWN;
@@ -244,11 +246,12 @@ rpl_update_header_empty(void)
     return;
   }
 }
-/*---------------------------------------------------------------------------*/
+/*Changed--------------------------------------------------------------------*/
 int
-rpl_update_header_final(uip_ipaddr_t *addr)
+rpl_update_header_final(uint8_t instance_id, uip_ipaddr_t *addr)
 {
   rpl_parent_t *parent;
+  rpl_instance_t *instance; //changed
   int uip_ext_opt_offset;
   int last_uip_ext_len;
 
@@ -270,12 +273,14 @@ rpl_update_header_final(uip_ipaddr_t *addr)
           PRINTF("RPL: Unable to add hop-by-hop extension header: incorrect default instance\n");
           return 1;
         }
-        parent = rpl_find_parent(default_instance->current_dag, addr);
+        /*Changed*/
+        instance = rpl_get_instance(instance_id);
+        parent = rpl_find_parent(instance->current_dag, addr);
         if(parent == NULL || parent != parent->dag->preferred_parent) {
           UIP_EXT_HDR_OPT_RPL_BUF->flags = RPL_HDR_OPT_DOWN;
         }
-        UIP_EXT_HDR_OPT_RPL_BUF->instance = default_instance->instance_id;
-        UIP_EXT_HDR_OPT_RPL_BUF->senderrank = default_instance->current_dag->rank;
+        UIP_EXT_HDR_OPT_RPL_BUF->instance = instance->instance_id;
+        UIP_EXT_HDR_OPT_RPL_BUF->senderrank = instance->current_dag->rank;
         uip_ext_len = last_uip_ext_len;
       }
     }
