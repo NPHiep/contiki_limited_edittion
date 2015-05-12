@@ -565,7 +565,8 @@ tcpip_ipv6_output(void)
   /*todo: Changed*/
   uint8_t instance_id = RPL_DEFAULT_INSTANCE;
   
-  uint8_t pkg_type = (UIP_TCP_BUF->tcpoffset)& 0xf;
+  uint8_t pkg_type = (UIP_TCP_BUF->tcpoffset) & 0xf;
+  // printf ("uip_len: %x %d\n", UIP_TCP_BUF->tcpoffset, uip_len );
   if(pkg_type == PKG_CRITICAL){
      instance_id = RPL_SECOND_INSTANCE; 
      printf ("critial uip_len: %d\n", uip_len );

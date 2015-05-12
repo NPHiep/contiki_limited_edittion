@@ -63,7 +63,7 @@ uip_udp_packet_send(struct uip_udp_conn *c, const void *data, int len)
     uip_process(UIP_UDP_SEND_CONN);
     
   //todo: changed reversed field
-UIP_TCP_BUF->tcpoffset |= 0xf0;
+UIP_TCP_BUF->tcpoffset &= 0xf0;
 if(instance_id == RPL_DEFAULT_INSTANCE){
   UIP_TCP_BUF->tcpoffset |= PKG_NORMAL; 
 }else{

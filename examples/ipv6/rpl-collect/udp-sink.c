@@ -173,13 +173,13 @@ PROCESS_THREAD(udp_server_process, ev, data)
     uip_ip6addr(&ipaddr, 0xaaaa, 0, 0, 0, 0, 0, 0, 0);
     rpl_set_prefix(dag, &ipaddr, 64);
     PRINTF("created a new RPL dag 0\n");
-  if(PROJ_SMLT_TYPE){
+  // if(PROJ_SMLT_TYPE){
     rpl_dag_t *dag1;  
     dag1 = rpl_set_root(RPL_SECOND_INSTANCE,(uip_ip6addr_t *)&ipaddr);  
     rpl_set_prefix(dag1, &ipaddr, 64); 
     PRINTF("created a new RPL dag 1\n");
 //#endif
-  } 
+  // } 
 }else {
     PRINTF("failed to create a new RPL DAG\n");
   }
